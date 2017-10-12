@@ -1,7 +1,6 @@
 package nl.ocs.lejos;
 
 import ev3dev.actuators.LCD;
-import ev3dev.hardware.EV3DevDevice;
 import ev3dev.sensors.Button;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.robotics.Color;
@@ -13,7 +12,7 @@ import java.awt.Font;
 import static java.awt.Font.MONOSPACED;
 import static java.awt.Font.PLAIN;
 
-public class App extends EV3DevDevice {
+public class App {
 
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
@@ -22,7 +21,7 @@ public class App extends EV3DevDevice {
 
     public static void main(final String[] args) {
         LOG.info("Starting robot");
-        clearLCD();
+        lcd.clear();
         lcd.setFont(new Font(MONOSPACED, PLAIN, 10));
         lcd.setColor(Color.BLACK);
         lcd.drawString("Hello Lego!", 10, 10, 0);
@@ -31,11 +30,5 @@ public class App extends EV3DevDevice {
         Button.waitForAnyPress();
         LOG.info("Shutting down.");
 
-    }
-
-    public static void clearLCD() {
-        lcd.setColor(Color.WHITE);
-        lcd.fillRect(0, 0, lcd.getWidth(), lcd.getHeight());
-        lcd.refresh();
     }
 }
