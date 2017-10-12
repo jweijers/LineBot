@@ -1,10 +1,8 @@
 package nl.ocs.lejos;
 
 import ev3dev.actuators.LCD;
-import ev3dev.actuators.Sound;
 import ev3dev.actuators.lego.motors.EV3LargeRegulatedMotor;
 import ev3dev.actuators.lego.motors.EV3MediumRegulatedMotor;
-import ev3dev.hardware.EV3DevDevice;
 import ev3dev.sensors.Button;
 import ev3dev.sensors.ev3.EV3ColorSensor;
 import ev3dev.sensors.ev3.EV3IRSensor;
@@ -28,12 +26,11 @@ import static java.awt.Font.PLAIN;
 /**
  * Hello Lego!
  */
-public class App extends EV3DevDevice {
+public class App {
 
     //EV3 display -- make sure to kill brickman!
     private static final GraphicsLCD lcd = LCD.getInstance();
-    //EV3 speaker
-    private static final Sound sound = Sound.getInstance();
+    
     //Engines for driving
     private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.B);
     private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.C);
@@ -50,7 +47,7 @@ public class App extends EV3DevDevice {
     public static void main(final String[] args) {
         LOG.info("Starting robot");
         setupShutdownHooks();
-        clearLCD();
+        lcd.clear();
         lcd.setFont(new Font(MONOSPACED, PLAIN, 10));
         lcd.setColor(Color.BLACK);
         lcd.drawString("Hello Lego!", 10, 10, 0);
@@ -66,7 +63,7 @@ public class App extends EV3DevDevice {
         LOG.info("Launching behaviors");
         arbitrator.go();
         LOG.warn("Arbitrator quit.");
-        clearLCD();
+        lcd.clear();
         LOG.info("Shutting down.");
 
     }
@@ -75,6 +72,7 @@ public class App extends EV3DevDevice {
         Button.ESCAPE.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(final Key key) {
+                lcd.clear();
                 LOG.info("Stopping program");
                 System.exit(1);
             }
@@ -113,11 +111,5 @@ public class App extends EV3DevDevice {
             rightMotor.stop();
             LOG.debug("ShutdownHook - Motors stopped.");
         }));
-    }
-
-    public static void clearLCD() {
-        lcd.setColor(Color.WHITE);
-        lcd.fillRect(0, 0, lcd.getWidth(), lcd.getHeight());
-        lcd.refresh();
     }
 }
