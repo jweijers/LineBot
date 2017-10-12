@@ -4,7 +4,6 @@ import ev3dev.actuators.LCD;
 import ev3dev.actuators.lego.motors.EV3LargeRegulatedMotor;
 import ev3dev.actuators.lego.motors.EV3MediumRegulatedMotor;
 import ev3dev.sensors.Button;
-import ev3dev.sensors.ev3.EV3ColorSensor;
 import ev3dev.sensors.ev3.EV3IRSensor;
 import lejos.hardware.Key;
 import lejos.hardware.KeyListener;
@@ -39,7 +38,6 @@ public class App {
     private static final EV3MediumRegulatedMotor armsMotor = new EV3MediumRegulatedMotor(MotorPort.A);
 
     //Sensors
-    private static final EV3ColorSensor colorSensor = new EV3ColorSensor(SensorPort.S3);
     private static final EV3IRSensor irSensor = new EV3IRSensor(SensorPort.S4);
 
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
@@ -57,7 +55,6 @@ public class App {
         final AtomicBoolean paused = new AtomicBoolean(false);
         setupRobotControlListeners(paused);
         final Behavior[] behaviors = { new DriveForwardBehavior(paused, leftMotor, rightMotor),
-                new FindRedBehavior(colorSensor, leftMotor, rightMotor, paused),
                 new BackOffBehavior(irSensor, leftMotor, rightMotor, paused) };
         final Arbitrator arbitrator = new Arbitrator(behaviors);
         LOG.info("Launching behaviors");
