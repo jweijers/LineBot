@@ -2,23 +2,19 @@ package nl.ocs.lejos;
 
 import ev3dev.actuators.LCD;
 import ev3dev.actuators.lego.motors.EV3LargeRegulatedMotor;
-import ev3dev.actuators.lego.motors.EV3MediumRegulatedMotor;
 import ev3dev.sensors.Button;
 import ev3dev.sensors.ev3.EV3ColorSensor;
-import ev3dev.sensors.ev3.EV3IRSensor;
 import lejos.hardware.Key;
 import lejos.hardware.KeyListener;
 import lejos.hardware.lcd.GraphicsLCD;
 import lejos.hardware.port.MotorPort;
 import lejos.hardware.port.SensorPort;
 import lejos.robotics.Color;
-import lejos.robotics.subsumption.Arbitrator;
-import lejos.robotics.subsumption.Behavior;
+import lejos.robotics.SampleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Font;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.awt.Font.MONOSPACED;
 import static java.awt.Font.PLAIN;
@@ -35,40 +31,46 @@ public class App {
     private static final EV3LargeRegulatedMotor leftMotor = new EV3LargeRegulatedMotor(MotorPort.B);
     private static final EV3LargeRegulatedMotor rightMotor = new EV3LargeRegulatedMotor(MotorPort.C);
 
-    //Engine for arms
-    private static final EV3MediumRegulatedMotor armsMotor = new EV3MediumRegulatedMotor(MotorPort.A);
-
     //Sensors
     private static final EV3ColorSensor colorSensor = new EV3ColorSensor(SensorPort.S3);
-    private static final EV3IRSensor irSensor = new EV3IRSensor(SensorPort.S4);
 
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     public static void main(final String[] args) {
         LOG.info("Starting robot");
         setupShutdownHooks();
+
         lcd.clear();
         lcd.setFont(new Font(MONOSPACED, PLAIN, 10));
         lcd.setColor(Color.BLACK);
         lcd.drawString("Hello Lego!", 10, 10, 0);
         lcd.refresh();
         LOG.info("Hello Lego!");
+
         Button.waitForAnyPress();
-        final AtomicBoolean paused = new AtomicBoolean(false);
-        setupRobotControlListeners(paused);
-        final Behavior[] behaviors = { new DriveForwardBehavior(paused, leftMotor, rightMotor),
-                new FindRedBehavior(colorSensor, leftMotor, rightMotor, paused),
-                new BackOffBehavior(irSensor, leftMotor, rightMotor, paused) };
-        final Arbitrator arbitrator = new Arbitrator(behaviors);
-        LOG.info("Launching behaviors");
-        arbitrator.go();
-        LOG.warn("Arbitrator quit.");
+
+        setupRobotControlListeners();
+
+        leftMotor.setSpeed(-200);
+        rightMotor.setSpeed(-200);
+        leftMotor.forward();
+        rightMotor.forward();
+        SampleProvider colorSampler = colorSensor.getColorIDMode();
+        float[] sample = new float[colorSampler.sampleSize()];
+        do {
+            colorSampler.fetchSample(sample, 0);
+            LOG.debug("Color sample: " + sample[0]);
+        } while(Color.RED != (int) sample[0]);
+
+        leftMotor.stop();
+        rightMotor.stop();
+
         lcd.clear();
         LOG.info("Shutting down.");
 
     }
 
-    public static void setupRobotControlListeners(final AtomicBoolean paused) {
+    public static void setupRobotControlListeners() {
         Button.ESCAPE.addKeyListener(new KeyListener() {
             @Override
             public void keyPressed(final Key key) {
@@ -82,31 +84,11 @@ public class App {
 
             }
         });
-        Button.ENTER.addKeyListener(new KeyListener() {
-            @Override
-            public void keyPressed(final Key key) {
-                final boolean pause = paused.get();
-                LOG.info("Setting robot pause = {}", !pause);
-                paused.set(!pause);
-                try {
-                    Thread.sleep(1000);
-                } catch (final InterruptedException e) {
-
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void keyReleased(final Key key) {
-
-            }
-        });
     }
 
     public static void setupShutdownHooks() {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOG.debug("ShutdownHook - Stopping motors.");
-            armsMotor.stop();
             leftMotor.stop();
             rightMotor.stop();
             LOG.debug("ShutdownHook - Motors stopped.");
